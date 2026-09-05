@@ -9,28 +9,6 @@ export const matchesRouter = Router();
 
 const MAX_LIMIT = 100;
 
-matchesRouter.get('/', async(req, res) => {
-    const parsed = listMatchesQuerySchema.safeParse(req.query);
-
-    if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid query!", details: JSON.stringify(parsed.error)});
-    }
-    
-    const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
-
-    try{
-        const data = await db.select()
-                             .from(matches)
-                             .limit(limit)
-                             .orderBy((desc(matches.createdAt)));
-
-        res.json({ data });
-
-    }catch(e){
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 matchesRouter.post('/', async (req, res) => {
     const parse = createMatchSchema.safeParse(req.body);
 
