@@ -1,13 +1,33 @@
 import { Router } from 'express';
 import { db } from '../db/db.js';
 import { matches } from '../db/schema.js';
-import { createMatchSchema } from '../validation/matches.js';
+import { createMatchSchema, listMatchesQuerySchema } from '../validation/matches.js';
 import { getMatchStatus } from '../utils/match-status.js';
 
 export const matchesRouter = Router();
 
-matchesRouter.get('/', (req, res) => {
-    res.status(200).json({ message: 'Matches list.' });
+const MAX_LIMIT = 100;
+
+matchesRouter.get('/', async(req, res) => {
+    const parse = listMatchesQuerySchema.safeParse(req.query);
+
+    if (!parse.success) {
+        return res.status(400).json({ error: "Invalid query!", details: JSON.stringify(parse.error)});
+    }
+    
+    const limit = Math.min(parse.data.limit ?? 50, MAX_LIMIT);
+
+    try{
+        const data = await db.select()
+                             .from(matches)
+                             .limit(limit)
+                             .orderBy((desc(matches.createdAt)));
+
+        res.json({ data });
+
+    }catch(e){
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 matchesRouter.post('/', async (req, res) => {
