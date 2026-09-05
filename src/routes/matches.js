@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { db } from '../db/db.js';
+import { desc } from 'drizzle-orm';
 import { matches } from '../db/schema.js';
 import { createMatchSchema, listMatchesQuerySchema } from '../validation/matches.js';
 import { getMatchStatus } from '../utils/match-status.js';
@@ -9,13 +10,13 @@ export const matchesRouter = Router();
 const MAX_LIMIT = 100;
 
 matchesRouter.get('/', async(req, res) => {
-    const parse = listMatchesQuerySchema.safeParse(req.query);
+    const parsed = listMatchesQuerySchema.safeParse(req.query);
 
-    if (!parse.success) {
-        return res.status(400).json({ error: "Invalid query!", details: JSON.stringify(parse.error)});
+    if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid query!", details: JSON.stringify(parsed.error)});
     }
     
-    const limit = Math.min(parse.data.limit ?? 50, MAX_LIMIT);
+    const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
 
     try{
         const data = await db.select()
