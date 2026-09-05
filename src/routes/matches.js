@@ -1,37 +1,39 @@
-import Router from 'express';
-import { createMatchSchema } from '../schemas/matches.js';
+import { Router } from 'express';
 import { db } from '../db/db.js';
+import { matches } from '../db/schema.js';
+import { createMatchSchema } from '../validation/matches.js';
+import { getMatchStatus } from '../utils/match-status.js';
 
-const matchRouter = Router();
+export const matchesRouter = Router();
 
-matchRouter.get('/', (req, res) => {
-    res.status(200).json({message: 'Matches list.'})
-})
+matchesRouter.get('/', (req, res) => {
+    res.status(200).json({ message: 'Matches list.' });
+});
 
-matchRouter.post('/', async (req, res) => {
+matchesRouter.post('/', async (req, res) => {
     const parse = createMatchSchema.safeParse(req.body);
-    const { data: { startTime, endTime, sport, homeScore, awayScore } } = parse;
 
     if (!parse.success) {
-        return res.status(400).json({ error: parse.error});
+        return res.status(400).json({ error: parse.error });
     }
 
-    try{
-         
-        const [event] = await db.insert(db.matches).values({
-            ...parse.data,
-            startTime: new Date(startTime),
-            endTime: new Date(endTime),
-            homeScore: homeScore ?? 0,
-            awayScore: awayScore ?? 0,
-            status: getMatchStatus(startTime, endTime),
-        }).returning();
+    const { startTime, endTime, homeScore, awayScore } = parse.data;
 
-        res.status(201).json({ data: event });
-    }catch(e){
+    try {
+        const [match] = await db
+            .insert(matches)
+            .values({
+                ...parse.data,
+                startTime: new Date(startTime),
+                endTime: new Date(endTime),
+                homeScore: homeScore ?? 0,
+                awayScore: awayScore ?? 0,
+                status: getMatchStatus(startTime, endTime),
+            })
+            .returning();
+
+        return res.status(201).json({ data: match });
+    } catch {
         return res.status(500).json({ error: 'Internal server error' });
     }
-
-})
-
-export default matchRouter;
+});
