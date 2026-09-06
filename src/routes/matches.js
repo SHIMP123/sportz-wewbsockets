@@ -9,15 +9,6 @@ export const matchesRouter = Router();
 
 const MAX_LIMIT = 100;
 
-/**
- * GET /matches - Retrieves a list of matches ordered by creation date (descending).
- * Supports pagination via query parameter limit (default 50, max 100).
- * @route GET /matches
- * @param {Object} req.query.limit - Optional limit for number of matches to return.
- * @returns {Object} 200 - JSON object with data array of matches.
- * @returns {Object} 400 - Invalid query parameters.
- * @returns {Object} 500 - Internal server error.
- */
 matchesRouter.get('/', async(req, res) => {
     const parsed = listMatchesQuerySchema.safeParse(req.query);
 
@@ -63,13 +54,12 @@ matchesRouter.post('/', async (req, res) => {
             .returning();
 
             if(res.app.locals.broadcastMatchCreated){
-                res.status(201).app.locals.broadcastMatchCreated(match);
+                res.status(201).json({ data: match });
+                res.app.locals.broadcastMatchCreated(match);
+            } else {
+                res.status(201).json({ data: match });
             }
 
-<<<<<<< HEAD
-=======
-            return res.status(201).json({ data: match });
->>>>>>> 45a0c806cc7a102131f62f0b4a7239385f660836
     } catch {
         return res.status(500).json({ error: 'Internal server error' });
     }
