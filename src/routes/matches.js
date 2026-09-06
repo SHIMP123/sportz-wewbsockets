@@ -54,9 +54,9 @@ matchesRouter.post('/', async (req, res) => {
             .returning();
 
             if(res.app.locals.broadcastMatchCreated){
-                res.app.locals.broadcastMatchCreated(match);
+                res.status(201).app.locals.broadcastMatchCreated(match);
             }
-            
+
     } catch {
         return res.status(500).json({ error: 'Internal server error' });
     }

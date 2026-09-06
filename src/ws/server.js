@@ -22,10 +22,24 @@ export function attachWebSocketServer(server) {
     });
 
     wss.on("connection", (ws) => {
+        ws.isAlive = true;
+
+        ws.on('pong', () => { ws.isAlive = true });
         sendJson(ws, { type: 'Welcome' });
 
         ws.on('error', console.error);
-    })
+    });
+
+    const interval = setTimeout(() => {
+        wss.clients.forEach((ws) => {
+            if(!ws.isAlive) return ws.terminate();
+
+            ws.isAlive = false;
+            ws.ping();
+        }, 30000);
+    });
+
+    wss.on('close', () => { clearInterval(interval) });
 
     function broadcastMatchCreated(match) {
         broadcast(wss, { type: 'Match created.', data: match }); 
