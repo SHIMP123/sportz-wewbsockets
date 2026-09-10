@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { wsArcjet } from './arcjet.js';
 
 /**
  * Sends a JSON payload to a WebSocket client if the connection is open.
@@ -36,11 +37,41 @@ export function attachWebSocketServer(server) {
         maxPayload: 1024 * 1024,
     });
 
-    wss.on("connection", (ws) => {
+    wss.on("connection", async (ws, req) => {
+        if(wsArcjet) {
+            try{
+                const decision = await wsArcjet.protect(req);
+
+                if(decision.isDenied){
+                    const code = decision.reason.isRateLimit() ? 1013 : 1008;
+                    const reason = decision.reason.isRateLimit() ? "Too many requests" : "Forbidden";
+
+                    ws.close(code, reason);
+                    return;
+                }
+            }catch(e){
+                console.error('Arcjet error: ', e);
+                ws.close(1011, "Service unavailable");
+                return;
+            }
+        }
+        ws.isAlive = true;
+        ws.on('pong', () => { ws.isAlive = true });
         sendJson(ws, { type: 'Welcome' });
 
         ws.on('error', console.error);
-    })
+    });
+
+    const interval = setTimeout(() => {
+        wss.clients.forEach((ws) => {
+            if(!ws.isAlive) return ws.terminate();
+
+            ws.isAlive = false;
+            ws.ping();
+        }, 30000);
+    });
+
+    wss.on('close', () => { clearInterval(interval) });
 
     function broadcastMatchCreated(match) {
         broadcast(wss, { type: 'Match created.', data: match }); 
