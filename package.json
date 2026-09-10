@@ -15,6 +15,8 @@
     "demo": "node src/index.js"
   },
   "dependencies": {
+    "@arcjet/inspect": "^1.11.0",
+    "@arcjet/node": "^1.11.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "express": "^5.2.1",
@@ -26,5 +28,10 @@
   "devDependencies": {
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.10"
+  },
+  "allowScripts": {
+    "esbuild@0.18.20": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
   }
 }
